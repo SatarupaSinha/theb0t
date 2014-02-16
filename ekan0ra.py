@@ -83,6 +83,28 @@ class LogBot(irc.IRCClient):
         self.msg(self.chn, msg)
         self.msg(self.chn, self.pingmsg.lstrip())
 
+        def split(self, str, length = 80):
+        if length<=0:
+            raise ValueError("Length must be a number greater than zero")
+        r=[]
+        while len(str) > length:
+            w, n = str[:length].rfind(' '), str[:length].find('\n')
+            if w == -1 and n == -1:
+                line, str = str[:length], str[length:]
+            else:
+                if n == -1:
+                    i = w
+                else:
+                    i = n
+                if i == 0: # just skip the space or newline. don't append any output.
+                    str = str[1:]
+                    continue
+                line, str = str[:i], str[i+1:]
+            r.append(line)
+        if len(str):
+            r.extend(str.split('\n'))
+        return r
+    
     def privmsg(self, user, channel, msg):
         """This will get called when the bot receives a message."""
         user = user.split('!', 1)[0]
@@ -103,6 +125,12 @@ class LogBot(irc.IRCClient):
         if msg.lower().startswith('pingall:') and user_cond:
             self.pingmsg = msg.lower().lstrip('pingall:')
             self.names(channel).addCallback(self.pingall)
+
+	if len(msg.lower())>=80:
+            x = self.split(msg)
+            for y in x:
+                s = str(y)
+                self.msg(channel, s)
 
     def action(self, user, channel, msg):
         """This will get called when the bot sees someone do an action."""
